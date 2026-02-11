@@ -55,7 +55,7 @@ y = y − offset
    Plugins → Development → Import plugin from manifest…  
 4. Select the `manifest.json` file.  
 5. Run via:  
-   Plugins → Development → CenterOffset  
+   Plugins → Development → OffsetCenter  
 
 ---
 
