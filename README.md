@@ -66,16 +66,7 @@ y = y − offset
 3. Choose:
    - **Inset** (shrink)
    - **Outset** (grow)
-4. Press ✓ or hit **Enter**.  
-
----
-
-## ⌨ Shortcuts
-
-- Enter → Apply  
-- Esc → Close  
-- I → Inset  
-- O → Outset  
+4. Press ✓ or hit **Enter**.   
 
 ---
 
