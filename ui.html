@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    :root {
+      font: 12px/1.2 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --panel: #2a2a2a;
+      --stroke: rgba(255,255,255,0.10);
+      --text: rgba(255,255,255,0.92);
+      --btn: rgba(255,255,255,0.10);
+      --btn2: rgba(255,255,255,0.14);
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: transparent;
+      display: grid;
+      place-items: center;
+    }
+    .bar {
+      width: 500px;
+      height: 60px;
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      color: var(--text);
+      box-sizing: border-box;
+    }
+    .label { font-weight: 600; padding: 0 6px; }
+
+    .num {
+      width: 72px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,0.18);
+      color: var(--text);
+      padding: 0 10px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .sliderWrap {
+      flex: 1;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,0.14);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+    input[type="range"] {
+      width: 100%;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.20);
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: #fff;
+      border: 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+      cursor: pointer;
+    }
+
+    .modeGroup { display: flex; gap: 6px; padding: 0 2px; }
+    .modeBtn {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: var(--btn);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+    .modeBtn:hover { background: var(--btn2); }
+    .modeBtn.active { outline: 2px solid rgba(0,164,255,0.7); outline-offset: 0; }
+
+    /* Simple icons (no SVG) */
+    .icon {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.85);
+      border-radius: 4px;
+      position: relative;
+      box-sizing: border-box;
+    }
+    .icon::after {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border: 2px solid rgba(255,255,255,0.55);
+      border-radius: 3px;
+      box-sizing: border-box;
+    }
+    .outset .icon::after { inset: -3px; border-color: rgba(255,255,255,0.55); }
+    .inset .icon::after { inset: 5px; border-color: rgba(255,255,255,0.55); }
+
+    .actions { display: flex; gap: 8px; margin-left: 4px; }
+    .actionBtn {
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: var(--btn);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .actionBtn:hover { background: var(--btn2); }
+    .apply {
+      width: 44px;
+      padding: 0;
+      background: rgba(0,164,255,0.22);
+      border-color: rgba(0,164,255,0.35);
+      color: #e9f7ff;
+    }
+    .apply:hover { background: rgba(0,164,255,0.30); }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <div class="label">Offset</div>
+
+    <!-- ✅ Decimals supported -->
+    <input id="amount" class="num" type="number" step="0.01" min="0" max="10000" value="10" />
+
+    <div class="sliderWrap">
+      <!-- ✅ Decimals supported -->
+      <input id="range" type="range" min="0" max="500" step="0.01" value="10" />
+    </div>
+
+    <div class="modeGroup" aria-label="Mode">
+      <div class="modeBtn inset" data-mode="inset" title="Inset (shrink)"><div class="icon"></div></div>
+      <div class="modeBtn outset" data-mode="outset" title="Outset (grow)"><div class="icon"></div></div>
+    </div>
+
+    <div class="actions">
+      <button class="actionBtn" id="cancel">Cancel</button>
+      <button class="actionBtn apply" id="apply" title="Apply">✓</button>
+    </div>
+  </div>
+
+  <script>
+    const amountEl = document.getElementById("amount");
+    const rangeEl = document.getElementById("range");
+    const modeBtns = Array.from(document.querySelectorAll(".modeBtn"));
+
+    let mode = "outset"; // default = grow
+
+    function setMode(m) {
+      mode = m;
+      modeBtns.forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+    }
+    setMode(mode);
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    function syncFromAmount() {
+      const v = Number(amountEl.value);
+      if (!Number.isFinite(v)) return;
+
+      // ✅ No rounding; keep decimals
+      const clamped = clamp(Math.abs(v), Number(rangeEl.min), Number(rangeEl.max));
+      rangeEl.value = String(clamped);
+    }
+
+    function syncFromRange() {
+      const mag = Number(rangeEl.value);
+      if (!Number.isFinite(mag)) return;
+
+      // ✅ No rounding; keep decimals
+      amountEl.value = String(mag);
+    }
+
+    amountEl.addEventListener("input", syncFromAmount);
+    rangeEl.addEventListener("input", syncFromRange);
+
+    modeBtns.forEach(btn => btn.addEventListener("click", () => setMode(btn.dataset.mode)));
+
+    function apply() {
+      parent.postMessage({ pluginMessage: { type: "apply", amount: amountEl.value, mode } }, "*");
+    }
+
+    document.getElementById("apply").addEventListener("click", apply);
+    document.getElementById("cancel").addEventListener("click", () => {
+      parent.postMessage({ pluginMessage: { type: "close" } }, "*");
+    });
+
+    // Keyboard shortcuts: Enter apply, Esc close, I/O toggle
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") parent.postMessage({ pluginMessage: { type: "close" } }, "*");
+      else if (e.key === "Enter") apply();
+      else if (e.key === "i" || e.key === "I") setMode("inset");
+      else if (e.key === "o" || e.key === "O") setMode("outset");
+    });
+  </script>
+</body>
+</html>
