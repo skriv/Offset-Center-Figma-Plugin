@@ -1,4 +1,4 @@
-# CenterOffset
+# Offset Center
 
 Precise inset & outset resizing from center in Figma.
 
